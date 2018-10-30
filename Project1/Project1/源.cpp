@@ -10,9 +10,9 @@ string reserved[] = { "try","catch","class","signed","unsigned","char","int","sh
 "enum","false","true","float","double","long double","string","typedef","void","struct","define","const","delete","dynamic_cast",
 "static","static_cast","switch","case","break","default","for","while","do","continue","if","else","goto","explicit",
 "export","extern","new","operator","private","public","protected","register","return","sizeof","throw","template","this","typeid",
-"friend","inline","using","namespace","union","virtual","reinterpret_cast","typename","volatile","wchar_t" };
+"friend","inline","using","namespace","union","virtual","reinterpret_cast","typename","volatile","wchar_t" ,"main"};
 //保留字/关键字的集合
-set<string> keyword(reserved, reserved + 64);
+set<string> keyword(reserved, reserved + 65);
 //标识符
 set<string> identifier;
 //常数表
@@ -20,52 +20,41 @@ set<string> constant;
 char character;
 string token;
 ifstream fin;
+//若character中的字符为空，则继续读字符，直到非空
 void getbe() {
-	while (character == ' ' || character == '\r' || character == '\n') {
+	while (character == ' ' || character == '\r' || character == '\n'||character=='\t') {
 		character = fin.get();
 	}
 }
+//将token中字符串与character中的字符连接作为token中的新字符串
 void concatenation() {
 	token += character;
 }
+//判断character中的字符是否为字母
 bool letter() {
 	return character >= 'a'&&character <= 'z' || character >= 'A'&&character <= 'Z';
 }
+//判断character中的字符是否为数字
 bool digit() {
 	return character >= '0'&&character <= '9';
 }
-int reserve() {
-	if (token == "while")
-		return 1;
-	else if (token == "if")
-		return 2;
-	else if (token == "else")
-		return 3;
-	else if (token == "switch")
-		return 4;
-	else if (token == "case")
-		return 5;
-	else if (token == "int")
-		return 6;
-	else if (token == "for")
-		return 7;
-	else if (token == "do")
-		return 8;
-	else if (token == "return")
-		return 9;
-	else if (token == "break")
-		return 10;
-	else if (token == "continue")
-		return 11;
-	else
-		return 0;
+//判断token中的字符串是否在保留字表中
+bool reserve() {
+	return keyword.find(token)==keyword.end();
 }
+//扫描指针回退一个字符，同时将character置为空白
 void retract() {
 	fin.seekg(-1, ios::cur);
 	character = ' ';
 }
-void buildlist() {
-	identifier.insert(token);
+//将标识符登记到符号表中(id=2),将常数登记到常数表(id=3)
+void buildlist(int id) {
+	if (id == 2) {
+		identifier.insert(token);
+	}
+	else {
+		constant.insert(token);
+	}
 }
 void error() {
 	cout << "error:" << character << endl;
@@ -84,12 +73,12 @@ void analysis() {
 			character = fin.get();
 		}
 		retract();
-		if (reserve() == 0) {
-			buildlist();
-			cout << "(2," + token + ")" << endl;
+		if (reserve()) {
+			buildlist(2);
+			cout << "(2,\"" + token + "\")" << endl;
 		}
 		else {
-			cout << "(1," + token + ")" << endl;
+			cout << "(1,\"" + token + "\")" << endl;
 		}
 	}
 	else if ('0' <= character && character <= '9') {
@@ -98,8 +87,8 @@ void analysis() {
 			character = fin.get();
 		}
 		retract();
-		buildlist();
-		cout << "(3," << token << ")" << endl;
+		buildlist(3);
+		cout << "(3,\"" << token << "\")" << endl;
 	}
 	else
 	{
@@ -107,23 +96,23 @@ void analysis() {
 		{
 
 		case '+':
-			cout << "(4," << character << ")" << endl;
+			cout << "(4,\"" << character << "\")" << endl;
 			break;
 		case '-':
-			cout << "(4," << character << ")" << endl;
+			cout << "(4,\"" << character << "\")" << endl;
 			break;
 		case '*':
-			cout << "(4," << character << ")" << endl;
+			cout << "(4,\"" << character << "\")" << endl;
 			break;
 		case '<':
 			concatenation();
 			character = fin.get();
 			if (character == '=') {
-				cout << "(4," << token << ")" << endl;
+				cout << "(4,\"" << token << "\")" << endl;
 			}
 			else {
 				retract();
-				cout << "(4," << token << ")" << endl;
+				cout << "(4,\"" << token << "\")" << endl;
 			}
 			break;
 		case '=':
@@ -131,11 +120,11 @@ void analysis() {
 			character = fin.get();
 			if (character == '=') {
 				concatenation();
-				cout << "(4," << token << ")" << endl;
+				cout << "(4,\"" << token << "\")" << endl;
 			}
 			else {
 				retract();
-				cout << "(4," << token << ")" << endl;
+				cout << "(4,\"" << token << "\")" << endl;
 			}
 			break;
 		case '(':
@@ -144,7 +133,8 @@ void analysis() {
 		case '}':
 		case ',':
 		case ';':
-			cout << "(5," << character << ")" << endl;
+		case '`':
+			cout << "(5,\"" << character << "\")" << endl;
 			break;
 		default:
 			error();
@@ -154,7 +144,7 @@ void analysis() {
 }
 int main()
 {
-	fin.open("D://test.txt", ios::binary | ios::in);
+	fin.open("test.txt", ios::binary | ios::in);
 	if (!fin)
 	{
 		cout << "文件打开失败" << endl;
