@@ -1,0 +1,20 @@
+#include<iostream>
+#include<string>
+#include<cctype>
+using namespace std;
+int main() {
+	int n;
+	cin >> n;
+	string s;
+	getline(cin, s);
+	while (n--) {
+		getline(cin, s);
+		char pre = ' ';
+		for (const char &c : s) {
+			if (pre == ' '&&c != ' ')cout << char(toupper(c));
+			pre = c;
+		}
+		cout << endl;
+	}
+	return 0;
+}

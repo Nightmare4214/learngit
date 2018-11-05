@@ -1,0 +1,116 @@
+#include<cstring>
+#include<stdio.h>
+using namespace std;
+const int maxsize = 10000;
+const int rocket = 2;
+bool visited[100][100][rocket];
+int m, n, map[100][100], ex, ey;
+class point
+{
+public:
+	int x, y, z, v;
+	point() {}
+	point(int x, int y, int z, int v) :x(x), y(y), z(z), v(v) {}
+};
+bool islegal(int &x, int &y, int &r)
+{
+	if (x >= 0 && x < m&&y >= 0 && y < n&&r < rocket && !visited[x][y][r])
+		return true;
+	else
+		return false;
+}
+class cirqueue
+{
+public:
+	int f;
+	int rear;
+	int cnt;
+	point data[maxsize];
+	cirqueue() :f(0), rear(0), cnt(0)
+	{
+		memset(data, 0, sizeof(data));
+	}
+	bool empty()
+	{
+		if (cnt == 0)
+			return true;
+		return false;
+	}
+	bool full()
+	{
+		if (cnt == maxsize)
+			return true;
+		return false;
+	}
+
+	void push(point a)
+	{
+		data[rear] = a;
+		rear = (rear + 1) % maxsize;
+		++cnt;
+	}
+	point front()
+	{
+		return data[f];
+	}
+	void pop()
+	{
+		f = (f + 1) % maxsize;
+		--cnt;
+	}
+};
+cirqueue ssr;
+void bfs()
+{
+	point vs;
+	int d[][3] = { { -2,0,1 },{ 2,0,1 },{ 0,-2,1 },{ 0,2,1 },{ -1,0,0 },{ 1,0,0 },{ 0,-1,0 },{ 0,1,0 } }, x, y, z;
+	while (!ssr.empty())
+	{
+		vs = ssr.front();
+		for (int i = 0; i < 8; ++i)
+		{
+			x = vs.x + d[i][0];
+			y = vs.y + d[i][1];
+			z = vs.z + d[i][2];
+			if (islegal(x, y, z) && map[x][y] != -1)
+			{
+				if (x == ex&&y == ey)
+				{
+					printf("%d", vs.v + 1);
+					return;
+				}
+				visited[x][y][z] = 1;
+				point vm(x, y, z, vs.v + 1);
+				ssr.push(vm);
+			}
+		}
+		ssr.pop();
+	}
+	printf("-1");
+}
+int main()
+{
+	scanf("%d%d", &m, &n);
+	bool first = true;
+	for (int i = 0, j; i < m; ++i)
+	{
+		for (j = 0; j < n; ++j)
+		{
+			scanf("%d", &map[i][j]);
+			if (!map[i][j] && first)
+			{
+				point a(i, j, 0, 0);
+				ssr.push(a);
+				first = false;
+				visited[i][j][0] = true;
+			}
+			else if (!map[i][j] && !first)
+			{
+				ex = i;
+				ey = j;
+			}
+		}
+	}
+	bfs();
+	return 0;
+}

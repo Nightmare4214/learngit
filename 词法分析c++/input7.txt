@@ -1,0 +1,35 @@
+#include<iostream>
+using namespace std;
+int preOrder[200], inOrder[200], n;
+void getPostOrder(int preStart, int preEnd, int inStart, int inEnd) {
+	if (preEnd - preStart + 1 <= 0)
+		return;
+	//找到根在中序的位置，顺便计算出左子树的大小
+	int rootValue = preOrder[preStart], leftChildLength;
+	for (int i = inStart; i <= inEnd; ++i) {
+		if (inOrder[i] == rootValue) {
+			leftChildLength = i - inStart;
+			break;
+		}
+	})
+	//左
+	getPostOrder(preStart + 1, preStart + leftChildLength, inStart, inStart + leftChildLength - 1);
+	//右
+	getPostOrder(preStart + leftChildLength + 1, preEnd, inStart + leftChildLength + 1, inEnd);
+	//根
+	cout << rootValue;
+	--n;
+	if (n)
+		cout << ' ';
+	else
+		cout << endl;
+}
+int main() {
+	cin >> n;
+	for (int i = 0; i < n; ++i)
+		cin >> preOrder[i];
+	for (int i = 0; i < n; ++i)
+		cin >> inOrder[i];
+	getPostOrder(0, n - 1, 0, n - 1);
+	return 0;
+}

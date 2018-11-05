@@ -1,0 +1,8 @@
+#include<iostream>
+int main(){
+	int a=0x3fffffff;
+	double f=0.5e+45;
+	double r=-0.6+-56.56e-56;
+	printf("%d\n",a);
+	return 0;
+}
