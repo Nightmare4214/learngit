@@ -1,0 +1,171 @@
+#include<iostream>
+#include<string>
+#include<cstring>
+using namespace std;
+typedef unsigned long long int uint64;
+//高和宽
+const int HEIGHT = 6, WIDTH = 8;
+//无穷大
+const int INF = 0x3f3f3f3f;
+/*位棋盘，只存当前玩家的棋子
+HEIGHT+1位存1个列(最高的用来表示满了)
+通过^掩码来改变当前玩家的棋子
+*/
+uint64 board;
+/*
+掩码,存所有的棋子，用1表示
+通过在列的最底下+1后或运算来下棋
+*/
+uint64 mask;
+//移动步骤
+int chessCnt;
+//下棋顺序
+int columnOrder[WIDTH];
+//输出棋盘
+void printBoard() {
+	char player = 'X', opponent = 'O';
+	if (0 == (chessCnt & 1))swap(player, opponent);
+	for (int i = HEIGHT - 1; i >= 0; --i) {
+		uint64 temp = 1ULL << i;
+		for (int j = 0; j < WIDTH; ++j) {
+			cout << '|';
+			uint64 tempMask = mask & temp;
+			uint64 tempBoard = board & temp;
+			if (0 == tempMask)cout << '_';
+			else if (0 != (tempMask^tempBoard))cout << player;
+			else cout << opponent;
+			temp <<= HEIGHT + 1;
+		}
+		cout << '|' << endl;
+	}
+	for (int i = 0; i < WIDTH; ++i) {
+		cout << ' ' << i;
+	}
+	cout << ' ' << endl;
+}
+//移动到col列最高的位置
+uint64 topMask(const int &col) {
+	/*
+	1ULL << (HEIGHT - 1)将1移到HEIGHT-1的位置(也就是棋盘的最高)
+	然后移到第col列
+	*/
+	return (1ULL << (HEIGHT - 1)) << ((HEIGHT + 1)*col);
+}
+/**
+ * 这一列能不能放棋子
+ * @param col 放在第几列(0-WIDTH-1)
+ * @return 这一列能不能放棋子
+ */
+bool canPlay(const int &col) {
+	return 0 == (mask & topMask(col));
+}
+//移动到col列最底下
+uint64 bottomMask(const int &col) {
+	return 1ULL << ((HEIGHT + 1)*col);
+}
+/**
+ * 放棋子
+ * @param col 放在第几列(0-WIDTH-1)
+ */
+void play(const int &col) {
+	//board转换成对手的棋子
+	board ^= mask;
+	//mask在col列加一个子
+	mask |= mask + bottomMask(col);
+	++chessCnt;
+}
+/**
+ * 悔棋
+ * @param col 放在第几列(0-WIDTH-1)
+ */
+void undo(const int &col) {
+	uint64 temp = topMask(col);
+	for(int i=0;i<HEIGHT;++i){
+		if (0 != temp & board) {
+			mask &= ~temp;
+			board ^= mask;
+			--chessCnt;
+			return;
+		}
+		else {
+			temp >>= 1;
+		}
+	}
+}
+//判断这一步下下去能不能赢（play之后调用）
+bool isWinMove(const int &col) {
+	//切换成自己的
+	uint64 tempBoard = board ^ mask;
+	/*
+	垂直
+	tempBorad   tempMask   tempMask&(tempMask >> 2
+	1         0 0        0 0
+	1         1 1        0 0
+	1         1 1        0 0
+	1         1 1        1 1
+	0         1 0        1 0
+	0         0 0        1 0
+	*/
+	uint64 tempMask = tempBoard & (tempBoard >> 1);
+	if (0 != (tempMask&(tempMask >> 2)))return true;
+
+	//水平
+	//右移height+1相当于移到前一列同一行
+	tempMask = tempBoard & (tempBoard >> (HEIGHT + 1));
+	if (0 != (tempMask&(tempMask >> ((HEIGHT + 1) << 1))))return true;
+
+	//主对角线
+	//右移height+2相当于移到前一列同一行的下一个
+	tempMask = tempBoard & (tempBoard >> (HEIGHT + 2));
+	if (0 != (tempMask&(tempMask >> ((HEIGHT + 2) << 1))))return true;
+
+	//副对角线
+	//右移height+1相当于移到前一列同一行的上一个
+	tempMask = tempBoard & (tempBoard >> HEIGHT);
+	return 0 != (tempMask&(tempMask >> (HEIGHT << 1)));
+}
+
+int getCorrectCol() {
+	string temp;
+	int col;
+	while (cin >> temp) {
+		try {
+			col = stoi(temp);
+			if (col < 0 || col >= WIDTH) {
+				cout << "列不正确,请重新输入" << endl;
+			}
+			else if (!canPlay(col)) {
+				cout << "这一列已经满了,请重新输入" << endl;
+			}
+			else return col;
+		}
+		catch (exception e) {
+			cout << "输入不正确,请重新输入" << endl;
+		}
+	}
+	return 0;
+}
+//人人对战
+void pvp() {
+	printBoard();
+	int col;
+	//是否轮到X
+	bool xTurn = true;
+	while (true) {
+		col = getCorrectCol();
+		play(col, getCode(xTurn));
+		printBoard();
+		if (isEnd(col, xTurn))return;
+		xTurn = !xTurn;
+	}
+}
+int main() {
+	printBoard();
+	play(3);
+	cout << '3' << endl;
+	printBoard();
+	play(4);
+	cout << '4' << endl;
+	printBoard();
+	return 0;
+}
